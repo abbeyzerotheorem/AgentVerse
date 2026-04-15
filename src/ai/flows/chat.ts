@@ -8,9 +8,8 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
 import {generateCode} from './generate-code';
+import {z} from 'zod';
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -40,58 +39,92 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   return chatFlow(input);
 }
 
-const decisionPrompt = ai.definePrompt({
-  name: 'decideChatOrCodePrompt',
-  input: {schema: z.object({prompt: z.string()})},
-  prompt: `You are a decision-making model. Your task is to determine if the user's request is for generating code or for a general chat conversation.
-        
-Respond with only the string "CODE" if the user wants to generate, write, build, or create a code snippet, function, component, etc.
-        
-Respond with only the string "CHAT" for anything else, including questions about code.
-        
-User Request: {{{prompt}}}`,
-});
+function detectCodeRequest(prompt: string) {
+  const codeKeywords = [
+    'code',
+    'component',
+    'function',
+    'react',
+    'typescript',
+    'javascript',
+    'html',
+    'css',
+    'script',
+    'api',
+    'backend',
+    'frontend',
+    'snippet',
+    'module',
+  ];
+  const normalized = prompt.toLowerCase();
+  return codeKeywords.some((keyword) => normalized.includes(keyword));
+}
 
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  async input => {
-    const decisionResponse = await decisionPrompt({prompt: input.message});
-    const decision = decisionResponse.text.trim().toUpperCase();
-
-    if (decision === 'CODE') {
-      const codeResult = await generateCode({prompt: input.message});
-      return {
-        message:
-          "I've generated the code you requested. You can open it in the sandbox to see a preview.",
-        code: codeResult.code,
-      };
-    } else {
-      const history = input.history.map(msg => ({
-        role: msg.role,
-        content: [{text: msg.content}],
-      }));
-
-      let systemPrompt = `You are a helpful AI assistant named AgentVerse.`;
-      if (input.settings) {
-        systemPrompt = `You are an AI assistant named ${input.settings.agentName}. 
-Your role is: ${input.settings.agentRole}.
-Follow these instructions for every response: ${input.settings.agentInstructions}`;
-      }
-      
-      const response = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
-        messages: history,
-        prompt: input.message,
-        system: systemPrompt,
-      });
-
-      return {
-        message: response.text,
-      };
-    }
+async function generateTextViaGoogle(input: ChatInput): Promise<string> {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error('Missing GOOGLE_API_KEY in environment variables. Add it to your .env file.');
   }
-);
+
+  const systemText = input.settings
+    ? `You are an AI assistant named ${input.settings.agentName}. Your role is: ${input.settings.agentRole}. Follow these instructions for every response: ${input.settings.agentInstructions}`
+    : `You are a helpful AI assistant named AgentVerse.`;
+
+  const conversation = [
+    `System: ${systemText}`,
+    ...input.history.map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`),
+    `User: ${input.message}`,
+  ].join('\n\n');
+
+  const response = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: conversation,
+              },
+            ],
+          },
+        ],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Google Generative API error: ${response.status} ${response.statusText} - ${errorBody}`);
+  }
+
+  const data = await response.json();
+  const text =
+    data?.candidates?.[0]?.content?.[0]?.text ||
+    data?.output?.[0]?.content?.[0]?.text ||
+    data?.candidates?.[0]?.output?.[0]?.content?.[0]?.text;
+
+  if (!text) {
+    throw new Error(`Unexpected response from Google Generative API: ${JSON.stringify(data)}`);
+  }
+
+  return text;
+}
+
+const chatFlow = async (input: ChatInput): Promise<ChatOutput> => {
+  if (detectCodeRequest(input.message)) {
+    const codeResult = await generateCode({prompt: input.message});
+    return {
+      message: "I've generated the code you requested. You can open it in the sandbox to see a preview.",
+      code: codeResult.code,
+    };
+  }
+
+  const message = await generateTextViaGoogle(input);
+  return {message};
+};
