@@ -192,15 +192,15 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen flex-col">
       <AppHeader title={activeConversation?.title || "Chat"} />
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-        <div className="mx-auto w-full max-w-2xl space-y-6 lg:max-w-4xl">
+      <div className="flex-1 overflow-y-auto bg-background">
+        <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-8 md:px-6 lg:px-8 lg:py-12">
           {messages.length === 0 && !isLoading ? (
             <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground pt-16">
              <img width="50" height="50" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADoElEQVR4nO1ZSWtUQRBuL+bgrkSnerJAjAje9BoFd1CiB/0HejW56kVPinrVi968iRchqIEkZgbMVL0QhERQBIMH44bbJVE0HvykOu/F58ssPZNkJqMpKGb6ve7q+mrrnhpjlmkuPd2BlWJxRQhvhfCOLa72tqPB1AuJxWUmXBxOo0ksoKwgTL0QE94MEVoURARAPWHqCYBEiv/xwHtTTyEkCQCaE6bOkvhymMRvVfm6SuKIhlqwQdnUK7HFLw0fGKww9Ui8DKDGtCQA9LajQQhdTBhmi695yuOCMlt8E4sRJnTPu3JJE9JCGGNCT5DG3rEtWGUWmYY3Yi2nsV8I95nwRK8j87H8KBPO6TiwOM6EbJW88Eks+oSQUQNW5IkwbHqKnKxVYyZ0lw1AY17DRi1fS+VlBsBw+R6wmMxtwhoNm9iNsqNsQeXuS+jIA2KqohKo5U8XR4LcWDcg3FtwSxNYLI5Feyffl12KIwBxYdWq5/xfAghiZTJSvBgATqGVCQM6332m0OqtYAqtQnhYaG0hABrOYU66UEv+hp3IpXBSEzcSUhQAYSBRKQZ8AajyxdZyAQCP27AuSOEEE16wxaW45SekCRulCe1CuO3jASH8SCgx7RtiOrfYWi4AQJ8z4bPzHmGaLTpVWFYt75S3+KiTgzS2lfTAPBItXxVCCdk5i+1znhMyKmwqrPd3CqFeCgAkP086ABpbkfV9AZRSohoA2OKTxnLGJcbMBcrfAyXieKFzQPJzn07uZMJ4sqp4AKi4CpVay54AcoTDkcCLSauUBKDngEW/q80W/dqJ8wZQYi17AGCL838LtegUwmDy7rNUTmKJcUA45CVkKQFATBcvPf5JADnCnsVWPiDsLlRmywKgh0S2FevLKGmLyZN62EbfvSyhP+PE4qBYfKg1AJ5p6ewMx8+9AAjhjBAeuO5ArT1A6BKLC+H4ZrltlWyNlR99lEJjdFNgiwNeAGKNrdFaKj9i0cwWd8NxxlT0Z8VMOEn8kCsSrz+1Gabg44bQZ/rOQ/EpIQS6Z2h5pzwTvuiV31SDcmkcTfxP9tLr9DTGZBuxWgi7NOZnw4bwpRolfJaY8DreQyrQ6/ENo8GqWT4OwHX0KusfTbLFMybcyKWxz9SCghSOiMWrWF6M65lSE2WWaZkqpKHNaGOLU0w4yxbXmHDLddFCdtWBMKYlMs6ux0T4nqeafHfvEvOdDEImLtvtZXFd9xbC6VwzthZS9DfLEwcct7w1dgAAAABJRU5ErkJggg==" alt="chatbot"/>
               <h2 className="mt-4 text-2xl font-semibold text-foreground">
                 Chat with {settings.agentName}
               </h2>
-              <p className="mt-2">
+              <p className="mt-2 text-sm">
                 Start a conversation by typing a message below. Your agent's persona can be changed in Settings.
               </p>
             </div>
@@ -209,67 +209,75 @@ export default function ChatPage() {
               <div
                 key={message.id}
                 className={cn(
-                  'flex w-full items-start gap-4',
-                  message.role === 'user' ? 'justify-end' : ''
+                  'flex w-full items-end gap-3',
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
                 {message.role === 'assistant' && (
-                  <Avatar className="h-8 w-8 border flex-shrink-0">
-                    <AvatarFallback>
-                      <Bot className="h-5 w-5" />
+                  <Avatar className="h-9 w-9 border border-border flex-shrink-0 mt-auto">
+                    <AvatarFallback className="bg-accent/10">
+                      <Bot className="h-5 w-5 text-accent" />
                     </AvatarFallback>
                   </Avatar>
                 )}
                 <div
                   className={cn(
-                    'max-w-prose rounded-lg p-3 text-sm shadow-sm w-full',
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card border flex-grow'
+                    'flex flex-col gap-2 max-w-2xl',
+                    message.role === 'user' ? 'items-end' : 'items-start'
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div
+                    className={cn(
+                      'rounded-xl px-4 py-3 shadow-sm border transition-all',
+                      message.role === 'user'
+                        ? 'bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-br-none'
+                        : 'bg-card border-border/60 text-foreground rounded-bl-none'
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">
+                      {message.content}
+                    </p>
+                  </div>
                   {message.code && (
-                    <div className="mt-4 space-y-2">
-                      <CodeBlock code={message.code} />
+                    <div className={cn('w-full space-y-2.5', message.role === 'user' ? 'pr-2' : 'pl-2')}>
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Generated Code
+                        </div>
+                        <CodeBlock code={message.code} language="jsx" />
+                      </div>
                       <Button
                         onClick={() => handleOpenInSandbox(message.code!)}
                         variant="outline"
                         size="sm"
+                        className={cn(
+                          'text-xs font-medium',
+                          message.role === 'user' ? 'ml-auto' : ''
+                        )}
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <ExternalLink className="mr-2 h-3.5 w-3.5" />
                         Open in Sandbox
                       </Button>
                     </div>
                   )}
                 </div>
                 {message.role === 'assistant' && (
-                   <Button
+                  <div className="flex-shrink-0 flex items-end gap-1.5">
+                    <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handlePlayAudio(message.id, message.content)}
                       disabled={!!audioLoading}
                       aria-label="Play audio"
-                      className="shrink-0"
-                   >
+                      className="h-9 w-9 hover:bg-accent/10"
+                    >
                       {audioLoading === message.id ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className="h-4.5 w-4.5 animate-spin text-accent" />
                       ) : (
-                          <Volume2 className="h-5 w-5" />
+                        <Volume2 className="h-4.5 w-4.5 text-muted-foreground hover:text-accent transition-colors" />
                       )}
-                  </Button>
-                )}
-                {message.role === 'user' && (
-                  <Avatar className="h-8 w-8 border flex-shrink-0">
-                    <AvatarImage
-                      src="https://i.pinimg.com/1200x/d0/fd/68/d0fd686d9f97f4c8ee97e6f722f06ccc.jpg"
-                      alt="@user"
-                      data-ai-hint="user avatar"
-                    />
-                    <AvatarFallback>
-                      <User className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
+                    </Button>
+                  </div>
                 )}
               </div>
             ))
@@ -291,24 +299,25 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="border-t bg-background">
-        <div className="mx-auto w-full max-w-4xl p-4">
-          <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className="border-t border-border/50 bg-background/50">
+        <div className="mx-auto w-full max-w-3xl px-4 py-4 md:px-6">
+          <form onSubmit={handleSubmit} className="flex gap-2.5 items-end">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={`Message ${settings.agentName}...`}
               disabled={isLoading}
-              className="text-base"
+              className="text-base min-h-11 px-4 py-2 rounded-lg"
               autoFocus
             />
             <Button
               type="submit"
               disabled={isLoading || !input.trim()}
-              size="icon"
+              size="lg"
+              className="h-11 px-6"
               aria-label="Send message"
             >
-              <Send className="h-5 w-5" />
+              <Send className="h-4.5 w-4.5" />
             </Button>
           </form>
         </div>

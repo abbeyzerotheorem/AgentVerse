@@ -13,12 +13,13 @@ import {
   SidebarFooter,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { MessageSquare, Settings, Code, Plus, Trash2, Moon, Sun } from 'lucide-react';
+import { MessageSquare, Settings, Code, Plus, Trash2, Moon, Sun, Search, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useChatHistory } from '@/lib/chat-history';
 import { Skeleton } from './ui/skeleton';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { useEffect, useState } from 'react';
 import type { UserProfile } from '@/lib/settings';
 import { USER_PROFILE_KEY, DEFAULT_USER_PROFILE } from '@/lib/settings';
@@ -30,6 +31,7 @@ export default function AppSidebar() {
   const { setTheme, theme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,6 +58,11 @@ export default function AppSidebar() {
   }, []);
   
   const conversationId = pathname.startsWith('/chat/') ? pathname.split('/').pop() : null;
+
+  // Filter conversations based on search query
+  const filteredConversations = conversations.filter(conv =>
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -142,6 +149,28 @@ export default function AppSidebar() {
            </SidebarMenuItem>
         </SidebarMenu>
         <SidebarSeparator />
+        
+        {/* Search Box */}
+        <div className="mb-2 px-1 group-data-[collapsible=icon]:hidden">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-8 h-8 text-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+        </div>
+        
         <div className="flex-1 overflow-y-auto">
           <SidebarMenu>
             {isLoading ? (
@@ -150,28 +179,44 @@ export default function AppSidebar() {
                   <Skeleton className="h-8 w-full" />
                   <Skeleton className="h-8 w-full" />
                </div>
+            ) : filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => {
+                const isActive = conversationId === conv.id;
+                return (
+                  <SidebarMenuItem key={conv.id} className="group/item relative">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className="transition-all duration-200"
+                    >
+                      <Link 
+                        href={`/chat/${conv.id}`}
+                        className={isActive ? 'bg-gradient-to-r from-primary/20 to-primary/10' : ''}
+                      >
+                        <MessageSquare className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className="truncate pr-6 text-sm">{conv.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                    <button
+                      onClick={(e) => handleDelete(e, conv.id)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground opacity-0 transition-all group-hover/item:opacity-100 hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:hidden"
+                      aria-label="Delete chat"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </SidebarMenuItem>
+                );
+              })
+            ) : conversations.length > 0 && searchQuery ? (
+              <div className="px-2 py-6 text-center text-xs text-muted-foreground">
+                <p>No conversations match</p>
+                <p className="mt-1">&quot;{searchQuery}&quot;</p>
+              </div>
             ) : (
-              conversations.map((conv) => (
-                <SidebarMenuItem key={conv.id} className="group/item relative">
-                  <SidebarMenuButton
-                    asChild
-                    isActive={conversationId === conv.id}
-                    tooltip={conv.title}
-                  >
-                    <Link href={`/chat/${conv.id}`}>
-                      <MessageSquare />
-                      <span className="truncate pr-6">{conv.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  <button
-                    onClick={(e) => handleDelete(e, conv.id)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground opacity-0 group-hover/item:opacity-100 hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:hidden"
-                    aria-label="Delete chat"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </SidebarMenuItem>
-              ))
+              <div className="px-2 py-6 text-center text-xs text-muted-foreground">
+                <p>No conversations yet</p>
+                <p className="mt-1">Start a new chat to begin</p>
+              </div>
             )}
           </SidebarMenu>
         </div>
@@ -213,7 +258,7 @@ export default function AppSidebar() {
                  <AvatarImage src="https://i.pinimg.com/736x/83/4f/e6/834fe637588ed7ccca41c0ebd659e855.jpg " alt="@user" data-ai-hint="user avatar" />
                  <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
               </Avatar>
-              <span className="group-data-[collapsible=icon]:hidden">{profile.name}</span>
+              <span className="group-data-[collapsible=icon]:hidden text-sm">{profile.name}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

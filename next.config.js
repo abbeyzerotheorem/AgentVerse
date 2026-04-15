@@ -24,7 +24,7 @@ const nextConfig = {
       }
     ],
   },
-  serverComponentsExternalPackages: ['@genkit-ai/googleai', '@genkit-ai/next', 'genkit'],
+  serverExternalPackages: ['@genkit-ai/googleai', '@genkit-ai/next', 'genkit'],
   webpack: (config) => {
     config.ignoreWarnings = [
       {
