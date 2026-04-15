@@ -84,7 +84,7 @@ Follow these instructions for every response: ${input.settings.agentInstructions
       
       const response = await ai.generate({
         model: 'googleai/gemini-2.0-flash',
-        history: history,
+        messages: history,
         prompt: input.message,
         system: systemPrompt,
       });
