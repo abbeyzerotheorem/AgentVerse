@@ -104,10 +104,30 @@ async function generateTextViaGoogle(input: ChatInput): Promise<string> {
   }
 
   const data = await response.json();
-  const text =
-    data?.candidates?.[0]?.content?.[0]?.text ||
-    data?.output?.[0]?.content?.[0]?.text ||
-    data?.candidates?.[0]?.output?.[0]?.content?.[0]?.text;
+
+  const candidates = data?.candidates;
+  let text: string | undefined;
+
+  if (Array.isArray(candidates) && candidates.length > 0) {
+    const candidate = candidates[0];
+    if (typeof candidate?.content?.text === 'string') {
+      text = candidate.content.text;
+    } else if (Array.isArray(candidate?.content?.parts)) {
+      text = candidate.content.parts.map((part: any) => part?.text).filter(Boolean).join(' ');
+    } else if (typeof candidate?.content === 'string') {
+      text = candidate.content;
+    }
+  }
+
+  if (!text && Array.isArray(data?.output) && data.output.length > 0) {
+    const output = data.output[0];
+    if (Array.isArray(output?.content)) {
+      text = output.content
+        .map((item: any) => item?.text || (Array.isArray(item?.parts) ? item.parts.map((part: any) => part?.text).filter(Boolean).join(' ') : undefined))
+        .filter(Boolean)
+        .join(' ');
+    }
+  }
 
   if (!text) {
     throw new Error(`Unexpected response from Google Generative API: ${JSON.stringify(data)}`);
