@@ -7,9 +7,10 @@ import { Textarea } from './ui/textarea';
 interface ChatInputProps {
   onSend: (message: string) => void;
   loading: boolean;
+  darkMode?: boolean;
 }
 
-export function ChatInput({ onSend, loading }: ChatInputProps) {
+export function ChatInput({ onSend, loading, darkMode }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -50,7 +51,9 @@ export function ChatInput({ onSend, loading }: ChatInputProps) {
             onChange={(event) => setMessage(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
-            className="min-h-[50px] max-h-[200px] resize-none pr-12 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm"
+            className={`min-h-[50px] max-h-[200px] resize-none pr-12 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm ${
+              darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : ''
+            }`}
             disabled={loading}
             rows={1}
           />
@@ -68,7 +71,9 @@ export function ChatInput({ onSend, loading }: ChatInputProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+      <div className={`flex items-center justify-between mt-3 text-xs ${
+        darkMode ? 'text-gray-400' : 'text-gray-500'
+      }`}>
         <div className="flex items-center space-x-4">
           <span>Press Enter to send</span>
           <span>•</span>

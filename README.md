@@ -8,7 +8,7 @@ AgentVerse is your launchpad for creating and interacting with sophisticated AI 
 
 We've poured our hearts into making this the most developer-friendly AI agent experience out there. We can't wait to see what you build with it.
 
-![AgentVerse Screenshot](https://i.pinimg.com/736x/d0/46/d1/d046d11e3645c018903a28a6ab582676.jpg)
+![AgentVerse Screenshot](#)
 
 ## Getting Started: Your 3-Minute Launch
 
