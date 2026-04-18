@@ -24,16 +24,6 @@ const nextConfig = {
       }
     ],
   },
-  serverExternalPackages: ['@genkit-ai/googleai', '@genkit-ai/next', 'genkit'],
-  webpack: (config) => {
-    config.ignoreWarnings = [
-      {
-        module: /.*\/node_modules\/handlebars\/lib\/index\.js$/,
-        message: /the request of a dependency is an expression/,
-      },
-    ];
-    return config;
-  },
 };
 
 module.exports = nextConfig;

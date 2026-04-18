@@ -3,9 +3,10 @@ import type {Config} from 'tailwindcss';
 export default {
   darkMode: ['class'],
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -40,8 +41,6 @@ export default {
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
-          'gradient-start': '#C61AFF',
-          'gradient-end': '#9333ea', // a slightly darker purple for the gradient
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
@@ -67,6 +66,10 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        // Custom colors from blueprint
+        'slate-blue': '#737CA1',
+        'light-gray': '#F0F2F5',
+        'electric-purple': '#8661C1',
       },
       borderRadius: {
         lg: 'var(--radius)',
