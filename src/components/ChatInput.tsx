@@ -5,21 +5,24 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 
 interface ChatInputProps {
-  onSend: (message: string) => void;
+  onSend: (message: string, files?: File[]) => void;
   loading: boolean;
   darkMode?: boolean;
 }
 
 export function ChatInput({ onSend, loading, darkMode }: ChatInputProps) {
   const [message, setMessage] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const trimmed = message.trim();
-    if (!trimmed || loading) return;
-    onSend(trimmed);
+    if ((!trimmed && selectedFiles.length === 0) || loading) return;
+    onSend(trimmed, selectedFiles);
     setMessage('');
+    setSelectedFiles([]);
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -33,6 +36,17 @@ export function ChatInput({ onSend, loading, darkMode }: ChatInputProps) {
     }
   };
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    // Filter for images and limit to 5 files
+    const validFiles = files.filter(file => file.type.startsWith('image/')).slice(0, 5);
+    setSelectedFiles(validFiles);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -43,6 +57,33 @@ export function ChatInput({ onSend, loading, darkMode }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="relative">
+      {/* File Preview */}
+      {selectedFiles.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {selectedFiles.map((file, index) => (
+            <div key={index} className={`relative group ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg p-2 flex items-center space-x-2`}>
+              <img
+                src={URL.createObjectURL(file)}
+                alt={file.name}
+                className="w-8 h-8 object-cover rounded"
+              />
+              <span className={`text-xs truncate max-w-24 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {file.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeFile(index)}
+                className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                  darkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
+                }`}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-end space-x-3">
         <div className="flex-1 relative">
           <Textarea
@@ -51,13 +92,38 @@ export function ChatInput({ onSend, loading, darkMode }: ChatInputProps) {
             onChange={(event) => setMessage(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
-            className={`min-h-[50px] max-h-[200px] resize-none pr-12 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm ${
+            className={`min-h-[50px] max-h-[200px] resize-none pr-20 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm ${
               darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : ''
             }`}
             disabled={loading}
             rows={1}
           />
-          {message.trim() && (
+
+          {/* File Upload Button */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={`absolute right-12 bottom-3 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+              darkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
+            }`}
+            title="Upload image"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {(message.trim() || selectedFiles.length > 0) && (
             <button
               type="submit"
               disabled={loading}
@@ -78,6 +144,8 @@ export function ChatInput({ onSend, loading, darkMode }: ChatInputProps) {
           <span>Press Enter to send</span>
           <span>•</span>
           <span>Shift + Enter for new line</span>
+          <span>•</span>
+          <span>Upload images (max 5)</span>
         </div>
         {loading && (
           <div className="flex items-center space-x-2">

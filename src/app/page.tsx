@@ -10,6 +10,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  files?: File[];
 }
 
 interface Conversation {
@@ -103,11 +104,11 @@ export default function Home() {
     }
   };
 
-  const handleSend = async (message: string) => {
+  const handleSend = async (message: string, files?: File[]) => {
     if (!currentConversationId) {
       createNewConversation();
       // Wait for state to update
-      setTimeout(() => handleSend(message), 0);
+      setTimeout(() => handleSend(message, files), 0);
       return;
     }
 
@@ -115,7 +116,8 @@ export default function Home() {
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      files: files
     };
 
     // Update conversation with user message
@@ -131,12 +133,18 @@ export default function Home() {
     ));
 
     try {
+      const formData = new FormData();
+      formData.append('message', message);
+      if (files && files.length > 0) {
+        files.forEach((file, index) => {
+          formData.append(`file_${index}`, file);
+        });
+        formData.append('fileCount', files.length.toString());
+      }
+
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
+        body: formData,
       });
 
       const data = await response.json();
